@@ -28,7 +28,7 @@ class Certyfikat(models.Model):
     id_czlonka = models.ForeignKey('Czlonek', models.DO_NOTHING, db_column='id_czlonka')
     id_projekt = models.ForeignKey('Projekt', models.DO_NOTHING, db_column='id_projekt')
     id_sekcja = models.ForeignKey('Sekcja', models.DO_NOTHING, db_column='id_sekcja')
-    created_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
     opis = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
@@ -48,8 +48,8 @@ class Czlonek(models.Model):
     indeks = models.IntegerField(unique=True, blank=True, null=True)
     telefon = models.IntegerField(blank=True, null=True)
     id_uzytkownika = models.ForeignKey('Uzytkownik', models.DO_NOTHING, db_column='id_uzytkownika', blank=True, null=True)
-    updated_at = models.DateTimeField()
-    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     opis = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
@@ -65,8 +65,8 @@ class Czlonek(models.Model):
 class Czlonekkierunek(models.Model):
     id_czlonek = models.ForeignKey(Czlonek, models.DO_NOTHING, db_column='id_czlonek')
     id_kierunku = models.ForeignKey('Kierunek', models.DO_NOTHING, db_column='id_kierunku')
-    updated_at = models.DateTimeField()
-    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     opis = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
@@ -82,8 +82,8 @@ class Czlonekkierunek(models.Model):
 class Czlonekprojektu(models.Model):
     id_czlonek = models.ForeignKey(Czlonek, models.DO_NOTHING, db_column='id_czlonek')
     id_projekt = models.ForeignKey('Projekt', models.DO_NOTHING, db_column='id_projekt')
-    updated_at = models.DateTimeField()
-    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     opis = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
@@ -99,8 +99,8 @@ class Czlonekprojektu(models.Model):
 class Czloneksekcji(models.Model):
     id_czlonek = models.ForeignKey(Czlonek, models.DO_NOTHING, db_column='id_czlonek')
     id_sekcja = models.ForeignKey('Sekcja', models.DO_NOTHING, db_column='id_sekcja')
-    updated_at = models.DateTimeField()
-    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     opis = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
@@ -162,8 +162,8 @@ class Partner(models.Model):
     osoba_odpowiedzialna = models.IntegerField()
     przychod = models.DecimalField(max_digits=20, decimal_places=2)
     odpowiedz = models.IntegerField()
-    updated_at = models.DateTimeField()
-    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     opis = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
@@ -196,8 +196,8 @@ class Przychod(models.Model):
     data = models.DateTimeField()
     osoba_odpowiedzialna = models.ForeignKey(Czlonek, models.DO_NOTHING, db_column='osoba_odpowiedzialna')
     id_partner = models.ForeignKey(Partner, models.DO_NOTHING, db_column='id_partner', blank=True, null=True, related_name='partner_przychody')
-    updated_at = models.DateTimeField()
-    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     opis = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
@@ -244,8 +244,8 @@ class Spotkanieczlonek(models.Model):
     id_spotkania = models.ForeignKey(Spotkanie, models.DO_NOTHING, db_column='id_spotkania')
     id_czlonka = models.ForeignKey(Czlonek, models.DO_NOTHING, db_column='id_czlonka')
     czy_obecny = models.BooleanField()
-    updated_at = models.DateTimeField()
-    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     opis = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
@@ -277,8 +277,8 @@ class Uzytkownikorganizacja(models.Model):
     haslo = models.CharField(max_length=64)
     id_uzytkownik = models.ForeignKey(Uzytkownik, models.DO_NOTHING, db_column='id_uzytkownik')
     id_organizacja = models.ForeignKey(Organizacja, models.DO_NOTHING, db_column='id_organizacja')
-    updated_at = models.DateTimeField()
-    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     opis = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
@@ -296,8 +296,8 @@ class Wydatek(models.Model):
     nazwa = models.CharField(max_length=60)
     data = models.DateTimeField()
     osoba_odpowiedzialna = models.ForeignKey(Czlonek, models.DO_NOTHING, db_column='osoba_odpowiedzialna')
-    updated_at = models.DateTimeField()
-    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     opis = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
@@ -311,6 +311,7 @@ class Wydatek(models.Model):
 
 
 class WidokBazyCzlonkow(models.Model):
+    id = models.IntegerField(primary_key=True)
     czlonek_imie = models.CharField(max_length=50, blank=True, null=True)
     czlonek_nazwisko = models.CharField(max_length=70, blank=True, null=True)
     czlonek_email = models.CharField(max_length=70, blank=True, null=True)
@@ -323,13 +324,14 @@ class WidokBazyCzlonkow(models.Model):
         return f"{self.czlonek_imie} {self.czlonek_nazwisko}"
 
     class Meta:
-        managed = False  # Created from a view. Don't remove.
+        managed = False
         db_table = 'widok_bazy_czlonkow'
         verbose_name = "Widok Bazy Członków"
         verbose_name_plural = "Widoki Bazy Członków"
 
 
 class WidokBudzetu(models.Model):
+    id = models.IntegerField(primary_key=True)
     przychod_kwota = models.DecimalField(max_digits=20, decimal_places=2, blank=True, null=True)
     przychod_nazwa = models.CharField(max_length=60, blank=True, null=True)
     przychod_updated_at = models.DateTimeField(blank=True, null=True)
@@ -345,13 +347,14 @@ class WidokBudzetu(models.Model):
         return f"Przychód: {self.przychod_nazwa} - Wydatek: {self.wydatek_nazwa}"
 
     class Meta:
-        managed = False  # Created from a view. Don't remove.
+        managed = False
         db_table = 'widok_budzetu'
         verbose_name = "Widok Budżetu"
         verbose_name_plural = "Widoki Budżetu"
 
 
 class WidokCertyfikatow(models.Model):
+    id = models.IntegerField(primary_key=True)
     czlonek_imie = models.CharField(max_length=50, blank=True, null=True)
     czlonek_nazwisko = models.CharField(max_length=70, blank=True, null=True)
     projekt_nazwa = models.CharField(max_length=80, blank=True, null=True)
@@ -363,13 +366,14 @@ class WidokCertyfikatow(models.Model):
         return f"Certyfikat dla {self.czlonek_imie} {self.czlonek_nazwisko} w projekcie {self.projekt_nazwa}"
 
     class Meta:
-        managed = False  # Created from a view. Don't remove.
+        managed = False
         db_table = 'widok_certyfikatow'
         verbose_name = "Widok Certyfikatów"
         verbose_name_plural = "Widoki Certyfikatów"
 
 
 class WidokObecnosci(models.Model):
+    id = models.IntegerField(primary_key=True)
     czlonek_imie = models.CharField(max_length=50, blank=True, null=True)
     czlonek_nazwisko = models.CharField(max_length=70, blank=True, null=True)
     czlonek_email = models.CharField(max_length=70, blank=True, null=True)
@@ -381,13 +385,14 @@ class WidokObecnosci(models.Model):
         return f"Obecność {self.czlonek_imie} {self.czlonek_nazwisko} na spotkaniu {self.spotkanie_data}"
 
     class Meta:
-        managed = False  # Created from a view. Don't remove.
+        managed = False
         db_table = 'widok_obecnosci'
         verbose_name = "Widok Obecności"
         verbose_name_plural = "Widoki Obecności"
 
 
 class WidokPartnerow(models.Model):
+    id = models.IntegerField(primary_key=True)
     partner_nazwa = models.CharField(max_length=100, blank=True, null=True)
     numer_telefonu = models.IntegerField(blank=True, null=True)
     e_mail = models.CharField(max_length=70, blank=True, null=True)
