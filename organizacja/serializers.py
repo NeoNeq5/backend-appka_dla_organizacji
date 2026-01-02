@@ -1,16 +1,15 @@
 from rest_framework import serializers
 from .models import Czlonek, WidokBazyCzlonkow, Kierunek, Czlonekkierunek, Sekcja, Czloneksekcji, Czlonekprojektu, \
-    Projekt
+    Projekt, Partner, WidokPartnerow, OdpowiedziSlownik
 
 
-# Lista członków
+# Moduł członków
 class WidokBazyCzlonkowSerializer(serializers.ModelSerializer):
     class Meta:
         model = WidokBazyCzlonkow
         fields = '__all__'
 
 
-# CRUD
 class CzlonekSerializer(serializers.ModelSerializer):
     class Meta:
         model = Czlonek
@@ -50,4 +49,20 @@ class ProjektSerializer(serializers.ModelSerializer):
 class CzlonekProjektuSerializer(serializers.ModelSerializer):
     class Meta:
         model = Czlonekprojektu
+        fields = '__all__'
+
+# Moduł partnerów
+class PartnerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Partner
+        fields = '__all__'
+
+class WidokPartnerowSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WidokPartnerow
+        fields = '__all__'
+
+class OdpowiedziSlownikSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OdpowiedziSlownik
         fields = '__all__'

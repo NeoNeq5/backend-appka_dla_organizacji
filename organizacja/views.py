@@ -3,10 +3,13 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Czlonek, WidokBazyCzlonkow, Czlonekkierunek, Czloneksekcji, Sekcja, Kierunek, Projekt, \
-    Czlonekprojektu
+    Czlonekprojektu, WidokPartnerow, Partner, OdpowiedziSlownik
 from .serializers import CzlonekSerializer, WidokBazyCzlonkowSerializer, CzlonekKierunekSerializer, \
-    CzlonekSekcjiSerializer, SekcjaSerializer, KierunekSerializer, ProjektSerializer, CzlonekProjektuSerializer
+    CzlonekSekcjiSerializer, SekcjaSerializer, KierunekSerializer, ProjektSerializer, CzlonekProjektuSerializer, \
+    WidokPartnerowSerializer, PartnerSerializer, OdpowiedziSlownikSerializer
 
+
+# Moduł członków
 
 @extend_schema_view(
     list=extend_schema(summary="Gotowy widok do modułu bazy członków", description="Wyświetla listę wszystkich członków wraz z pełnymi informacjami ze wszystkich tabel powiązanych."),
@@ -122,3 +125,36 @@ list=extend_schema(summary="Lista wszystkich przypisań do projektów", descript
 class CzlonekProjektuViewSet(viewsets.ModelViewSet):
     queryset = Czlonekprojektu.objects.all()
     serializer_class = CzlonekProjektuSerializer
+
+
+# Moduł partnerów
+
+@extend_schema_view(
+    list=extend_schema(summary="Gotowy widok do modułu bazy partnerów", description="Wyświetla listę wszystkich partnerów wraz z pełnymi informacjami ze wszystkich tabel powiązanych."),
+    retrieve=extend_schema(summary="Szczegóły danego partnera")
+)
+class ListaPartnerowViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = WidokPartnerow.objects.all()
+    serializer_class = WidokPartnerowSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['partner_nazwa', 'osoba_odp_nazwisko']
+    ordering_fields = ['partner_nazwa', 'przychod_kwota']
+
+
+@extend_schema_view(
+    list=extend_schema(summary="Lista danych tabeli partnerów"),
+    create=extend_schema(summary="Dodaj partnera", description="Tworzy nowy wpis firmy partnerskiej."),
+    retrieve=extend_schema(summary="Dane do formularza edycji"),
+    update=extend_schema(summary="Pełna aktualizacja partnera"),
+    partial_update=extend_schema(summary="Edytuj partnera", description="Pozwala na zmianę danych partnera (że ołówek)"),
+    destroy=extend_schema(summary="Usuń partnera", description="Trwale usuwa firmę z bazy (że kosz)")
+)
+class PartnerViewSet(viewsets.ModelViewSet):
+    queryset = Partner.objects.all()
+    serializer_class = PartnerSerializer
+
+
+@extend_schema_view(list=extend_schema(summary="Opcje odpowiedzi (Dropdown)"))
+class OdpowiedziSlownikViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = OdpowiedziSlownik.objects.all()
+    serializer_class = OdpowiedziSlownikSerializer
