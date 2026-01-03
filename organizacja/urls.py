@@ -6,6 +6,11 @@ from .views import ListaCzlonkowViewSet, CzlonekCRUDViewSet, CzlonekKierunekView
 
 router = DefaultRouter()
 
+
+#Słowniki
+router.register(r'slownik-statusow', OdpowiedziSlownikViewSet, basename='slownik-statusow')
+
+
 #Członkowie
 router.register(r'lista-czlonkow', ListaCzlonkowViewSet, basename='lista-czlonkow')
 router.register(r'czlonkowie', CzlonekCRUDViewSet)

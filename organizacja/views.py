@@ -15,6 +15,13 @@ from .serializers import CzlonekSerializer, WidokBazyCzlonkowSerializer, Czlonek
     WidokPartnerowSerializer, PartnerSerializer, OdpowiedziSlownikSerializer, PrzychodSerializer, WydatekSerializer
 
 
+# Słowniki
+class OdpowiedziSlownikViewSet(viewsets.ReadOnlyModelViewSet):
+    """Endpoint zwracający opcje do dropdown dla statusy odpowiedzi partnerów"""
+    queryset = OdpowiedziSlownik.objects.all().order_by('nazwa')
+    serializer_class = OdpowiedziSlownikSerializer
+
+
 # Moduł członków
 
 @extend_schema_view(

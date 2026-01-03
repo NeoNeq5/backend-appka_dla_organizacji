@@ -3,6 +3,13 @@ from .models import Czlonek, WidokBazyCzlonkow, Kierunek, Czlonekkierunek, Sekcj
     Projekt, Partner, WidokPartnerow, OdpowiedziSlownik, Przychod, WidokBudzetu, Wydatek
 
 
+# Słowniki
+class OdpowiedziSlownikSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OdpowiedziSlownik
+        fields = ['id', 'nazwa']
+
+
 # Moduł członków
 class WidokBazyCzlonkowSerializer(serializers.ModelSerializer):
     class Meta:
