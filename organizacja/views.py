@@ -4,15 +4,17 @@ from django.shortcuts import render
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.response import Response
 from django.db.models import Sum
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters, mixins
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import api_view
 
 from .models import Czlonek, WidokBazyCzlonkow, Czlonekkierunek, Czloneksekcji, Sekcja, Kierunek, Projekt, \
-    Czlonekprojektu, WidokPartnerow, Partner, OdpowiedziSlownik, Przychod, Budzet, Wydatek
+    Czlonekprojektu, WidokPartnerow, Partner, OdpowiedziSlownik, Przychod, Budzet, Wydatek, Spotkanie, Spotkanieczlonek, \
+    WidokObecnosci
 from .serializers import CzlonekSerializer, WidokBazyCzlonkowSerializer, CzlonekKierunekSerializer, \
     CzlonekSekcjiSerializer, SekcjaSerializer, KierunekSerializer, ProjektSerializer, CzlonekProjektuSerializer, \
-    WidokPartnerowSerializer, PartnerSerializer, OdpowiedziSlownikSerializer, PrzychodSerializer, WydatekSerializer
+    WidokPartnerowSerializer, PartnerSerializer, OdpowiedziSlownikSerializer, PrzychodSerializer, WydatekSerializer, \
+    SpotkanieSerializer, SpotkanieCzlonekSerializer, WidokObecnosciSerializer, CzlonekObecnoscGridSerializer
 
 
 # Słowniki
@@ -228,3 +230,46 @@ def pobierz_saldo(request):
         'suma_przychodow': suma_przychodow,
         'suma_wydatkow': suma_wydatkow
     })
+
+
+# Moduł obecności
+@extend_schema_view(
+    list=extend_schema(summary="Lista spotkań", description="Pobiera listę wszystkich spotkań, które służą jako nagłówki kolumn w tabeli obecności."),
+    create=extend_schema(summary="Dodaj nowe spotkanie", description="Tworzy nowe spotkanie. Trigger 'trg_generuj_obecnosci' automatycznie wygeneruje puste rekordy obecności dla wszystkich członków."),
+    retrieve=extend_schema(summary="Szczegóły spotkania"),
+    update=extend_schema(summary="Pełna edycja spotkania"),
+    partial_update=extend_schema(summary="Szybka edycja spotkania (np. zmiana daty)"),
+    destroy=extend_schema(summary="Usuń spotkanie", description="Usuwa spotkanie oraz kaskadowo wszystkie powiązane z nim rekordy obecności.")
+)
+class SpotkanieViewSet(viewsets.ModelViewSet):
+    queryset = Spotkanie.objects.all().order_by('-data')
+    serializer_class = SpotkanieSerializer
+
+
+@extend_schema_view(
+    partial_update=extend_schema(summary="Zaznacz obecność (checkbox)", description="Aktualizuje status 'czy_obecny' dla konkretnego członka na wybranym spotkaniu.")
+)
+class SpotkanieCzlonekViewSet(viewsets.GenericViewSet, mixins.UpdateModelMixin):
+    queryset = Spotkanieczlonek.objects.all()
+    serializer_class = SpotkanieCzlonekSerializer
+
+
+@extend_schema_view(
+    list=extend_schema(summary="Gotowy widok obecności (SQL)", description="Wyświetla płaską listę obecności pobraną bezpośrednio z widoku 'Widok_Obecnosci'."),
+    retrieve=extend_schema(summary="Szczegóły wpisu w widoku obecności")
+)
+class WidokObecnosciViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = WidokObecnosci.objects.all()
+    serializer_class = WidokObecnosciSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['czlonek_imie', 'czlonek_nazwisko', 'czlonek_email']
+
+
+@extend_schema_view(
+    list=extend_schema(summary="Główny widok siatki obecności", description="Zwraca listę członków wraz z ich statusami obecności przypisanymi do spotkań. Idealne do renderowania głównej tabeli modułu.")
+)
+class ObecnoscGridViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Czlonek.objects.all()
+    serializer_class = CzlonekObecnoscGridSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['imie', 'nazwisko', 'e_mail']

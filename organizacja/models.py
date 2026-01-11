@@ -381,7 +381,7 @@ class WidokObecnosci(models.Model):
     czlonek_email = models.CharField(max_length=70, blank=True, null=True)
     spotkanie_data = models.DateTimeField(blank=True, null=True)
     sekcja_nazwa = models.CharField(max_length=50, blank=True, null=True)
-    czy_obecny = models.BooleanField(blank=True, null=True)
+    czy_obecny = models.BooleanField()
 
     def __str__(self):
         return f"Obecność {self.czlonek_imie} {self.czlonek_nazwisko} na spotkaniu {self.spotkanie_data}"
