@@ -54,6 +54,18 @@ class CzlonekCRUDViewSet(viewsets.ModelViewSet):
     queryset = Czlonek.objects.all()
     serializer_class = CzlonekSerializer
 
+    def perform_create(self, serializer):
+        data = self.request.data
+
+        with transaction.Atomic():
+            czlonek = serializer.save()
+
+            if 'kierunek' in data and data['kierunek']:
+                Czlonekkierunek.objects.create(id_czlonek=czlonek, id_kierunku_id=data['kierunek'])
+            if 'sekcja' in data and data['sekcja']:
+                Czloneksekcji.objects.create(id_czlonek=czlonek, id_sekcja_id=data['sekcja'])
+            if 'projekt' in data and data['projekt']:
+                Czlonekprojektu.objects.create(id_czlonek=czlonek, id_projekt_id=data['projekt'])
 
 @extend_schema_view(
     list=extend_schema(summary="Lista kierunków do dropdown", description="Pobiera listę kierunków studiów dostępnych w organizacji."),

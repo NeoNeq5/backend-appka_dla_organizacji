@@ -18,9 +18,13 @@ class WidokBazyCzlonkowSerializer(serializers.ModelSerializer):
 
 
 class CzlonekSerializer(serializers.ModelSerializer):
+    kierunek = serializers.IntegerField(required=False, write_only=True)
+    sekcja = serializers.IntegerField(required=False, write_only=True)
+    projekt = serializers.IntegerField(required=False, write_only=True)
+
     class Meta:
         model = Czlonek
-        fields = ['id', 'imie', 'nazwisko', 'e_mail', 'indeks', 'telefon', 'opis']
+        fields = ['id', 'imie', 'nazwisko', 'e_mail', 'indeks', 'telefon', 'opis', 'kierunek', 'sekcja', 'projekt']
 
 
 class CzlonekKierunekSerializer(serializers.ModelSerializer):
