@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Czlonek, WidokBazyCzlonkow, Kierunek, Czlonekkierunek, Sekcja, Czloneksekcji, Czlonekprojektu, \
-    Projekt, Partner, WidokPartnerow, OdpowiedziSlownik, Przychod, WidokBudzetu, Wydatek
+    Projekt, Partner, WidokPartnerow, OdpowiedziSlownik, Przychod, WidokBudzetu, Wydatek, Spotkanie, Spotkanieczlonek, \
+    WidokObecnosci
 
 
 # Słowniki
@@ -109,3 +110,36 @@ class WidokBudzetuSerializer(serializers.ModelSerializer):
         model = WidokBudzetu
         fields = '__all__'
 
+# Moduł obecności
+class SpotkanieSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Spotkanie
+        fields = '__all__'
+
+class SpotkanieCzlonekSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Spotkanieczlonek
+        fields = ['id', 'czy_obecny']
+
+class WidokObecnosciSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WidokObecnosci
+        fields = '__all__'
+
+class CzlonekObecnoscGridSerializer(serializers.ModelSerializer):
+    obecnosci = SpotkanieCzlonekSerializer(source='obecnosci_czlonka', many=True, read_only=True)
+
+    class Meta:
+        model = Czlonek
+        fields = ['id', 'imie', 'nazwisko', 'e_mail', 'obecnosci']
+
+
+# Moduł certyfikatów
+class CertyfikatGenerujRequestSerializer(serializers.Serializer):
+    temp_file_name = serializers.CharField()
+    grupa_id = serializers.IntegerField()
+    typ_grupy = serializers.ChoiceField(choices=['wszyscy', 'sekcja', 'projekt'])
+
+
+class CertyfikatUploadSerializer(serializers.Serializer):
+    file = serializers.ImageField()

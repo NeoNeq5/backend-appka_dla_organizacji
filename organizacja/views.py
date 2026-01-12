@@ -4,16 +4,27 @@ from django.shortcuts import render
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.response import Response
 from django.db.models import Sum
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters, mixins
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import api_view
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from .models import Czlonek, WidokBazyCzlonkow, Czlonekkierunek, Czloneksekcji, Sekcja, Kierunek, Projekt, \
-    Czlonekprojektu, WidokPartnerow, Partner, OdpowiedziSlownik, Przychod, Budzet, Wydatek
+    Czlonekprojektu, WidokPartnerow, Partner, OdpowiedziSlownik, Przychod, Budzet, Wydatek, Spotkanie, Spotkanieczlonek, \
+    WidokObecnosci
 from .serializers import CzlonekSerializer, WidokBazyCzlonkowSerializer, CzlonekKierunekSerializer, \
     CzlonekSekcjiSerializer, SekcjaSerializer, KierunekSerializer, ProjektSerializer, CzlonekProjektuSerializer, \
-    WidokPartnerowSerializer, PartnerSerializer, OdpowiedziSlownikSerializer, PrzychodSerializer, WydatekSerializer
-
+    WidokPartnerowSerializer, PartnerSerializer, OdpowiedziSlownikSerializer, PrzychodSerializer, WydatekSerializer, \
+    SpotkanieSerializer, SpotkanieCzlonekSerializer, WidokObecnosciSerializer, CzlonekObecnoscGridSerializer, \
+    CertyfikatUploadSerializer, CertyfikatGenerujRequestSerializer
+import os
+import uuid
+from django.conf import settings
+from django.core.files.storage import default_storage
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema, extend_schema_view
 
 # Słowniki
 class OdpowiedziSlownikViewSet(viewsets.ReadOnlyModelViewSet):
@@ -240,3 +251,127 @@ def pobierz_saldo(request):
         'suma_przychodow': suma_przychodow,
         'suma_wydatkow': suma_wydatkow
     })
+
+
+# Moduł obecności
+@extend_schema_view(
+    list=extend_schema(summary="Lista spotkań", description="Pobiera listę wszystkich spotkań, które służą jako nagłówki kolumn w tabeli obecności."),
+    create=extend_schema(summary="Dodaj nowe spotkanie", description="Tworzy nowe spotkanie. Trigger 'trg_generuj_obecnosci' automatycznie wygeneruje puste rekordy obecności dla wszystkich członków."),
+    retrieve=extend_schema(summary="Szczegóły spotkania"),
+    update=extend_schema(summary="Pełna edycja spotkania"),
+    partial_update=extend_schema(summary="Szybka edycja spotkania (np. zmiana daty)"),
+    destroy=extend_schema(summary="Usuń spotkanie", description="Usuwa spotkanie oraz kaskadowo wszystkie powiązane z nim rekordy obecności.")
+)
+class SpotkanieViewSet(viewsets.ModelViewSet):
+    queryset = Spotkanie.objects.all().order_by('-data')
+    serializer_class = SpotkanieSerializer
+
+
+@extend_schema_view(
+    partial_update=extend_schema(summary="Zaznacz obecność (checkbox)", description="Aktualizuje status 'czy_obecny' dla konkretnego członka na wybranym spotkaniu.")
+)
+class SpotkanieCzlonekViewSet(viewsets.GenericViewSet, mixins.UpdateModelMixin):
+    queryset = Spotkanieczlonek.objects.all()
+    serializer_class = SpotkanieCzlonekSerializer
+
+
+@extend_schema_view(
+    list=extend_schema(summary="Gotowy widok obecności (SQL)", description="Wyświetla płaską listę obecności pobraną bezpośrednio z widoku 'Widok_Obecnosci'."),
+    retrieve=extend_schema(summary="Szczegóły wpisu w widoku obecności")
+)
+class WidokObecnosciViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = WidokObecnosci.objects.all()
+    serializer_class = WidokObecnosciSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['czlonek_imie', 'czlonek_nazwisko', 'czlonek_email']
+
+
+@extend_schema_view(
+    list=extend_schema(summary="Główny widok siatki obecności", description="Zwraca listę członków wraz z ich statusami obecności przypisanymi do spotkań. Idealne do renderowania głównej tabeli modułu.")
+)
+class ObecnoscGridViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Czlonek.objects.all()
+    serializer_class = CzlonekObecnoscGridSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['imie', 'nazwisko', 'e_mail']
+
+# Moduł certyfikatów
+@extend_schema_view(
+    upload_tlo=extend_schema(summary="Krok 1: Prześlij tło",
+                             description="Zapisuje grafikę tymczasowo i zwraca jej ID."),
+    generuj=extend_schema(summary="Krok 2 i 3: Generuj PDF",
+                          description="Pobiera członków, nakłada dane na tło, wysyła PDF i usuwa tło.")
+)
+class CertyfikatGeneratorViewSet(viewsets.ViewSet):
+    @extend_schema(
+        summary="Krok 1: Prześlij tło",
+        description="Prześlij grafikę tła. Serwer zwróci identyfikator pliku.",
+        request={
+            'multipart/form-data': {
+                'type': 'object',
+                'properties': {
+                    'file': {
+                        'type': 'string',
+                        'format': 'binary',
+                        'description': 'Plik graficzny tła (PNG/JPG)'
+                    }
+                },
+                'required': ['file']
+            }
+        },
+    )
+    @action(detail=False, methods=['post'], url_path='upload-tlo')
+    def upload_tlo(self, request):
+        file_obj = request.FILES.get('file')
+
+        if not file_obj:
+            return Response({"error": "Nie przesłano pliku."}, status=400)
+
+        ext = file_obj.name.split('.')[-1]
+        temp_name = f"{uuid.uuid4()}.{ext}"
+        path = default_storage.save(f'temp_tla/{temp_name}', file_obj)
+
+        return Response({"temp_file_name": temp_name}, status=201)
+
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+    @extend_schema(
+        summary="Krok 2 i 3: Generuj PDF",
+        description="Pobiera członków grupy, nakłada dane na tło i zwraca komunikat o sukcesie.",
+        request=CertyfikatGenerujRequestSerializer,
+    )
+    @action(detail=False, methods=['post'], url_path='generuj')
+    def generuj(self, request):
+        serializer = CertyfikatGenerujRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        temp_name = serializer.validated_data['temp_file_name']
+        grupa_id = serializer.validated_data['grupa_id']
+        typ_grupy = serializer.validated_data['typ_grupy']
+
+        full_path = os.path.join(settings.MEDIA_ROOT, 'temp_tla', temp_name)
+
+        if not os.path.exists(full_path):
+            return Response({"error": "Plik tła nie istnieje lub wygasł."}, status=404)
+
+        czlonkowie = self._get_members(typ_grupy, grupa_id)
+
+        try:
+            os.remove(full_path)
+            return Response({
+                "message": f"Wygenerowano certyfikaty dla {len(czlonkowie)} osób. Tło usunięte.",
+                "lista_osob": [f"{c.imie} {c.nazwisko}" for c in czlonkowie]
+            })
+        except Exception as e:
+            if os.path.exists(full_path): os.remove(full_path)
+            return Response({"error": str(e)}, status=500)
+
+    def _get_members(self, typ, g_id):
+        """Pomocnicza funkcja do filtrowania członków wg Twoich grup"""
+        if typ == 'wszyscy':
+            return Czlonek.objects.all()
+        elif typ == 'sekcja':
+            return Czlonek.objects.filter(czloneksekcji__id_sekcja=g_id)
+        elif typ == 'projekt':
+            return Czlonek.objects.filter(czlonekprojektu__id_projekt=g_id)
+        return []
