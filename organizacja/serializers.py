@@ -1,14 +1,15 @@
 from rest_framework import serializers
+from django.db import transaction
 from .models import Czlonek, WidokBazyCzlonkow, Kierunek, Czlonekkierunek, Sekcja, Czloneksekcji, Czlonekprojektu, \
     Projekt, Partner, WidokPartnerow, OdpowiedziSlownik, Przychod, WidokBudzetu, Wydatek, Spotkanie, Spotkanieczlonek, \
     WidokObecnosci
 
 
-# Słowniki
-class OdpowiedziSlownikSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OdpowiedziSlownik
-        fields = ['id', 'nazwa']
+# # Słowniki
+# class OdpowiedziSlownikSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = OdpowiedziSlownik
+#         fields = ['id', 'nazwa']
 
 
 # Moduł członków
@@ -25,7 +26,42 @@ class CzlonekSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Czlonek
-        fields = ['id', 'imie', 'nazwisko', 'e_mail', 'indeks', 'telefon', 'opis', 'kierunek', 'sekcja', 'projekt']
+        fields = [
+            'id', 'imie', 'nazwisko', 'e_mail',
+            'indeks', 'telefon', 'opis',
+            'kierunek', 'sekcja', 'projekt'
+        ]
+
+    def create(self, validated_data):
+        # wyciągamy pola techniczne
+        kierunek_id = validated_data.pop('kierunek', None)
+        sekcja_id = validated_data.pop('sekcja', None)
+        projekt_id = validated_data.pop('projekt', None)
+
+        with transaction.atomic():
+            # tworzymy członka
+            czlonek = Czlonek.objects.create(**validated_data)
+
+            # relacje
+            if kierunek_id:
+                Czlonekkierunek.objects.create(
+                    id_czlonek=czlonek,
+                    id_kierunku_id=kierunek_id
+                )
+
+            if sekcja_id:
+                Czloneksekcji.objects.create(
+                    id_czlonek=czlonek,
+                    id_sekcja_id=sekcja_id
+                )
+
+            if projekt_id:
+                Czlonekprojektu.objects.create(
+                    id_czlonek=czlonek,
+                    id_projekt_id=projekt_id
+                )
+
+        return czlonek
 
 
 class CzlonekKierunekSerializer(serializers.ModelSerializer):
