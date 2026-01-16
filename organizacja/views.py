@@ -1,30 +1,30 @@
 from django.db import transaction
 from django.db.models import Sum
 from django.shortcuts import render
-from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.response import Response
 from django.db.models import Sum
 from rest_framework import viewsets, filters, mixins
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.decorators import api_view
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from .models import Czlonek, WidokBazyCzlonkow, Czlonekkierunek, Czloneksekcji, Sekcja, Kierunek, Projekt, \
     Czlonekprojektu, WidokPartnerow, Partner, OdpowiedziSlownik, Przychod, Budzet, Wydatek, Spotkanie, Spotkanieczlonek, \
-    WidokObecnosci
+    WidokObecnosci, Uzytkownikorganizacja
 from .serializers import CzlonekSerializer, WidokBazyCzlonkowSerializer, CzlonekKierunekSerializer, \
     CzlonekSekcjiSerializer, SekcjaSerializer, KierunekSerializer, ProjektSerializer, CzlonekProjektuSerializer, \
     WidokPartnerowSerializer, PartnerSerializer, OdpowiedziSlownikSerializer, PrzychodSerializer, WydatekSerializer, \
     SpotkanieSerializer, SpotkanieCzlonekSerializer, WidokObecnosciSerializer, CzlonekObecnoscGridSerializer, \
-    CertyfikatUploadSerializer, CertyfikatGenerujRequestSerializer
+    CertyfikatUploadSerializer, CertyfikatGenerujRequestSerializer, RejestracjaSerializer, LoginRequestSerializer
 import os
 import uuid
 from django.conf import settings
 from django.core.files.storage import default_storage
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, extend_schema_view
+from django.contrib.auth.hashers import check_password
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.decorators import api_view
 
 # Słowniki
 class OdpowiedziSlownikViewSet(viewsets.ReadOnlyModelViewSet):
@@ -362,3 +362,50 @@ class CertyfikatGeneratorViewSet(viewsets.ViewSet):
         elif typ == 'projekt':
             return Czlonek.objects.filter(czlonekprojektu__id_projekt=g_id)
         return []
+
+
+# Moduł autoryzacji
+@extend_schema(
+    summary="Logowanie i generowanie JWT",
+    request=LoginRequestSerializer,
+)
+@api_view(['POST'])
+def login_view(request):
+    email = request.data.get('email')
+    haslo_raw = request.data.get('haslo')
+    org_id = request.data.get('id_organizacja')
+
+    try:
+        konto = Uzytkownikorganizacja.objects.select_related('id_uzytkownik').get(
+            email=email, id_organizacja=org_id
+        )
+    except Uzytkownikorganizacja.DoesNotExist:
+        return Response({"error": "Niepoprawne dane"}, status=401)
+
+    if check_password(haslo_raw, konto.haslo):
+        refresh = RefreshToken.for_user(konto.id_uzytkownik)
+
+        refresh['rola'] = konto.id_uzytkownik.rola
+        refresh['id_organizacja'] = org_id
+
+        return Response({
+            'access': str(refresh.access_token),
+            'role': konto.id_uzytkownik.rola,
+            'user_id': konto.id_uzytkownik.id
+        })
+
+    return Response({"error": "Błędne hasło"}, status=401)
+
+
+@extend_schema(
+    summary="Rejestracja użytkownika",
+    description="Tworzy nowe konto i haszuje hasło Argon2 przed zapisem.",
+    request=RejestracjaSerializer,
+)
+@api_view(['POST'])
+def rejestracja_view(request):
+    serializer = RejestracjaSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"message": "Użytkownik został zarejestrowany pomyślnie."}, status=201)
+    return Response(serializer.errors, status=400)

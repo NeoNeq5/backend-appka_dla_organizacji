@@ -274,7 +274,7 @@ class Uzytkownik(models.Model):
 
 class Uzytkownikorganizacja(models.Model):
     email = models.CharField(unique=True, max_length=70)
-    haslo = models.CharField(max_length=64)
+    haslo = models.CharField(max_length=255)
     id_uzytkownik = models.ForeignKey(Uzytkownik, models.DO_NOTHING, db_column='id_uzytkownik')
     id_organizacja = models.ForeignKey(Organizacja, models.DO_NOTHING, db_column='id_organizacja')
     updated_at = models.DateTimeField(auto_now=True)

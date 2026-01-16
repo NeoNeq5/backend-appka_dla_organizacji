@@ -1,8 +1,13 @@
 from rest_framework import serializers
+<<<<<<< HEAD
 from django.db import transaction
+=======
+from django.contrib.auth.hashers import make_password
+import re
+>>>>>>> 316c19391241fbf352a884baa1069fb3c146a8b8
 from .models import Czlonek, WidokBazyCzlonkow, Kierunek, Czlonekkierunek, Sekcja, Czloneksekcji, Czlonekprojektu, \
     Projekt, Partner, WidokPartnerow, OdpowiedziSlownik, Przychod, WidokBudzetu, Wydatek, Spotkanie, Spotkanieczlonek, \
-    WidokObecnosci
+    WidokObecnosci, Uzytkownikorganizacja
 
 
 # # Słowniki
@@ -179,3 +184,25 @@ class CertyfikatGenerujRequestSerializer(serializers.Serializer):
 
 class CertyfikatUploadSerializer(serializers.Serializer):
     file = serializers.ImageField()
+
+
+# Autoryzacja
+class RejestracjaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Uzytkownikorganizacja
+        fields = ['email', 'haslo', 'id_uzytkownik', 'id_organizacja', 'opis']
+
+    def validate_email(self, value):
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", value):
+            raise serializers.ValidationError("Błędny format e-mail.")
+        return value
+
+    def create(self, validated_data):
+        validated_data['haslo'] = make_password(validated_data['haslo'])
+        return super().create(validated_data)
+
+
+class LoginRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField(help_text="Twój adres e-mail")
+    haslo = serializers.CharField(help_text="Twoje hasło")
+    id_organizacja = serializers.IntegerField(help_text="ID organizacji, do której się logujesz")
