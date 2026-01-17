@@ -80,6 +80,14 @@ class PartnerSerializer(serializers.ModelSerializer):
         model = Partner
         fields = '__all__'
 
+    def validate_osoba_odpowiedzialna(self, value):
+        if not Czlonek.objects.filter(id=value).exists():
+            raise serializers.ValidationError(
+                f"Nie można przypisać osoby o ID {value}, ponieważ taki członek nie istnieje."
+            )
+        return value
+
+
 class WidokPartnerowSerializer(serializers.ModelSerializer):
     class Meta:
         model = WidokPartnerow
