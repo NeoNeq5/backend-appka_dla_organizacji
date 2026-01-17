@@ -2,7 +2,7 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
-from .models import Czlonek, Przychod, Budzet, Wydatek
+from .models import Czlonek, Przychod, Wydatek, Partner, OdpowiedziSlownik
 
 
 class CzlonekAPITests(APITestCase):
@@ -106,3 +106,62 @@ class BudzetAPITests(APITestCase):
         }
         response = self.client.post(self.url_wydatek, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+class PartnerAPITests(APITestCase):
+    def setUp(self):
+        # członka, który będzie osobą odpowiedzialną
+        self.czlonek = Czlonek.objects.create(
+            imie="Anna",
+            nazwisko="Nowak",
+            e_mail="a.nowak@org.pl"
+        )
+
+        # wpis w słowniku odpowiedzi
+        self.status_odp = OdpowiedziSlownik.objects.create(
+            nazwa="Zainteresowany",
+            opis="Partner wyraził chęć współpracy"
+        )
+
+        try:
+            self.url_partnerzy = reverse('lista-partnerow')
+        except:
+            self.url_partnerzy = '/api/partnerzy/'
+
+    def test_dodaj_partnera_sukces(self):
+        data = {
+            "nazwa": "Tech Solutions Sp. z o.o.",
+            "numer_telefonu": 555666777,
+            "e_mail": "biuro@techsolutions.pl",
+            "osoba_odpowiedzialna": self.czlonek.id,
+            "przychod": "5000.00",
+            "odpowiedz": self.status_odp.id,
+            "opis": "Partner strategiczny"
+        }
+        response = self.client.post(self.url_partnerzy, data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Partner.objects.count(), 1)
+        self.assertEqual(Partner.objects.get().nazwa, "Tech Solutions Sp. z o.o.")
+
+    def test_dodaj_partnera_nieistniejacy_czlonek(self):
+        data = {
+            "nazwa": "Błędna Firma",
+            "osoba_odpowiedzialna": 9999,  # ID, które nie istnieje
+            "przychod": "100.00",
+            "odpowiedz": self.status_odp.id
+        }
+        response = self.client.post(self.url_partnerzy, data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("nie istnieje", str(response.data))
+
+
+    def test_brak_nazwy_partnera(self):
+        data = {
+            "osoba_odpowiedzialna": self.czlonek.id,
+            "przychod": "500.00",
+            "odpowiedz": self.status_odp.id
+        }
+        response = self.client.post(self.url_partnerzy, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('nazwa', response.data)
