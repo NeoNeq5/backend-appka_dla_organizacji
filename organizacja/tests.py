@@ -1,6 +1,8 @@
+from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
-from .models import Czlonek
+from .models import Czlonek, Przychod, Budzet, Wydatek
 
 
 class CzlonekAPITests(APITestCase):
@@ -60,3 +62,47 @@ class CzlonekAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
+class BudzetAPITests(APITestCase):
+    def setUp(self):
+        self.osoba = Czlonek.objects.create(
+            imie="Skarbnik",
+            nazwisko="Testowy",
+            e_mail="skarbnik@organizacja.pl"
+        )
+        self.url_przychod = '/api/przychody/'
+        self.url_wydatek = '/api/wydatki/'
+        self.url_saldo = '/api/saldo/'
+
+
+    def test_obliczanie_salda(self):
+        try:
+            self.url_saldo = reverse('pobierz-saldo')
+        except:
+            self.url_saldo = '/api/saldo/'
+
+        # przychód 100 zł
+        Przychod.objects.create(
+            kwota=100.00, nazwa="Grant", data=timezone.now(), osoba_odpowiedzialna=self.osoba
+        )
+        # wydatek 30 zł
+        Wydatek.objects.create(
+            kwota=30.00, nazwa="Druk", data=timezone.now(), osoba_odpowiedzialna=self.osoba
+        )
+
+        response = self.client.get(self.url_saldo)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Oczekiwane saldo: 100 - 30 = 70
+        self.assertEqual(float(response.data['saldo']), 70.00)
+        self.assertEqual(float(response.data['suma_przychodow']), 100.00)
+        self.assertEqual(float(response.data['suma_wydatkow']), 30.00)
+
+    def test_wydatek_bez_osoby_odpowiedzialnej(self):
+        data = {
+            "kwota": "10.00",
+            "nazwa": "Błąd",
+            "data": timezone.now().isoformat()
+            # Brak osoba_odpowiedzialna
+        }
+        response = self.client.post(self.url_wydatek, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
