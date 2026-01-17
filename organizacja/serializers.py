@@ -25,6 +25,18 @@ class CzlonekSerializer(serializers.ModelSerializer):
         model = Czlonek
         fields = ['id', 'imie', 'nazwisko', 'e_mail', 'indeks', 'telefon', 'opis']
 
+    def validate(self, data):
+        imie = data.get('imie')
+        nazwisko = data.get('nazwisko')
+
+        if imie and nazwisko:
+            if imie.strip() == "Antek" and nazwisko.strip() == "Czaplicki":
+                raise serializers.ValidationError(
+                    "Nie można dodać tego użytkownika: debil."
+                )
+
+        return data
+
 
 class CzlonekKierunekSerializer(serializers.ModelSerializer):
     class Meta:
@@ -60,6 +72,7 @@ class CzlonekProjektuSerializer(serializers.ModelSerializer):
     class Meta:
         model = Czlonekprojektu
         fields = '__all__'
+
 
 # Moduł partnerów
 class PartnerSerializer(serializers.ModelSerializer):
