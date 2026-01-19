@@ -203,7 +203,7 @@ class BudzetAPITests(APITestCase):
         # czy użycie tekstu zamiast liczby zwraca błąd
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-        # czy odpowiedź zawiera informację o błędnej kwocie
+        # czy odpowiedź zawiera informacje o błędnej kwocie
         self.assertIn('kwota', response.data)
 
 class PartnerAPITests(APITestCase):
