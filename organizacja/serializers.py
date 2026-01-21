@@ -1,10 +1,7 @@
 from rest_framework import serializers
-<<<<<<< HEAD
 from django.db import transaction
-=======
 from django.contrib.auth.hashers import make_password
 import re
->>>>>>> 316c19391241fbf352a884baa1069fb3c146a8b8
 from .models import Czlonek, WidokBazyCzlonkow, Kierunek, Czlonekkierunek, Sekcja, Czloneksekcji, Czlonekprojektu, \
     Projekt, Partner, WidokPartnerow, OdpowiedziSlownik, Przychod, WidokBudzetu, Wydatek, Spotkanie, Spotkanieczlonek, \
     WidokObecnosci, Uzytkownikorganizacja
