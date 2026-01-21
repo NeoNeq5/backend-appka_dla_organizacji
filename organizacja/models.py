@@ -7,6 +7,8 @@
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
 
+import sys
+TESTING = 'test' in sys.argv
 
 class Budzet(models.Model):
     kwota = models.DecimalField(max_digits=20, decimal_places=2)
@@ -18,7 +20,7 @@ class Budzet(models.Model):
         return f"{self.kwota}"
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'budzet'
         verbose_name = "Budżet"
         verbose_name_plural = "Budżety"
@@ -26,8 +28,8 @@ class Budzet(models.Model):
 
 class Certyfikat(models.Model):
     id_czlonka = models.ForeignKey('Czlonek', models.DO_NOTHING, db_column='id_czlonka')
-    id_projekt = models.ForeignKey('Projekt', models.DO_NOTHING, db_column='id_projekt')
-    id_sekcja = models.ForeignKey('Sekcja', models.DO_NOTHING, db_column='id_sekcja')
+    id_projekt = models.ForeignKey('Projekt', models.DO_NOTHING, db_column='id_projekt', null=True, blank=True)
+    id_sekcja = models.ForeignKey('Sekcja', models.DO_NOTHING, db_column='id_sekcja', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     opis = models.CharField(max_length=255, blank=True, null=True)
 
@@ -35,7 +37,7 @@ class Certyfikat(models.Model):
         return f"Certyfikat {self.id} dla czlonka {self.id_czlonka}"
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'certyfikat'
         verbose_name = "Certyfikat"
         verbose_name_plural = "Certyfikaty"
@@ -56,7 +58,7 @@ class Czlonek(models.Model):
         return f"{self.imie} {self.nazwisko}"
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'czlonek'
         verbose_name = "Członek"
         verbose_name_plural = "Członkowie"
@@ -73,7 +75,7 @@ class Czlonekkierunek(models.Model):
         return f"Członek {self.id_czlonek} kierunku {self.id_kierunku}"
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'czlonekkierunek'
         verbose_name = "Członek Kierunku"
         verbose_name_plural = "Członkowie Kierunków"
@@ -90,7 +92,7 @@ class Czlonekprojektu(models.Model):
         return f"Członek {self.id_czlonek} projektu {self.id_projekt}"
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'czlonekprojektu'
         verbose_name = "Członek Projektu"
         verbose_name_plural = "Członkowie Projektów"
@@ -107,7 +109,7 @@ class Czloneksekcji(models.Model):
         return f"Członek {self.id_czlonek} sekcji {self.id_sekcja}"
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'czloneksekcji'
         verbose_name = "Członek Sekcji"
         verbose_name_plural = "Członkowie Sekcji"
@@ -121,7 +123,7 @@ class Kierunek(models.Model):
         return self.nazwa
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'kierunek'
         verbose_name = "Kierunek"
         verbose_name_plural = "Kierunki"
@@ -135,7 +137,7 @@ class OdpowiedziSlownik(models.Model):
         return self.nazwa
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'odpowiedzi_slownik'
         verbose_name = "Odpowiedź Słownik"
         verbose_name_plural = "Odpowiedzi Słownik"
@@ -149,7 +151,7 @@ class Organizacja(models.Model):
         return self.nazwa
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'organizacja'
         verbose_name = "Organizacja"
         verbose_name_plural = "Organizacje"
@@ -170,7 +172,7 @@ class Partner(models.Model):
         return self.nazwa
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'partner'
         verbose_name = "Partner"
         verbose_name_plural = "Partnerzy"
@@ -184,7 +186,7 @@ class Projekt(models.Model):
         return self.nazwa
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'projekt'
         verbose_name = "Projekt"
         verbose_name_plural = "Projekty"
@@ -204,7 +206,7 @@ class Przychod(models.Model):
         return f"{self.nazwa} - {self.kwota}zł"
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'przychod'
         verbose_name = "Przychód"
         verbose_name_plural = "Przychody"
@@ -218,7 +220,7 @@ class Sekcja(models.Model):
         return self.nazwa
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'sekcja'
         verbose_name = "Sekcja"
         verbose_name_plural = "Sekcje"
@@ -234,7 +236,7 @@ class Spotkanie(models.Model):
         return self.nazwa
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'spotkanie'
         verbose_name = "Spotkanie"
         verbose_name_plural = "Spotkania"
@@ -252,7 +254,7 @@ class Spotkanieczlonek(models.Model):
         return f"Członek {self.id_czlonka} na spotkaniu {self.id_spotkania}"
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'spotkanieczlonek'
         verbose_name = "Spotkanie Członek"
         verbose_name_plural = "Spotkania Członkowie"
@@ -266,7 +268,7 @@ class Uzytkownik(models.Model):
         return f"Użytkownik {self.id} - Rola: {self.rola}"
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'uzytkownik'
         verbose_name = "Użytkownik"
         verbose_name_plural = "Użytkownicy"
@@ -285,7 +287,7 @@ class Uzytkownikorganizacja(models.Model):
         return f"UżytkownikOrganizacja {self.id}"
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'uzytkownikorganizacja'
         verbose_name = "Użytkownik Organizacja"
         verbose_name_plural = "Użytkownicy Organizacje"
@@ -304,7 +306,7 @@ class Wydatek(models.Model):
         return f"{self.nazwa} - {self.kwota}zł"
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'wydatek'
         verbose_name = "Wydatek"
         verbose_name_plural = "Wydatki"
@@ -326,7 +328,7 @@ class WidokBazyCzlonkow(models.Model):
         return f"{self.czlonek_imie} {self.czlonek_nazwisko}"
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'widok_bazy_czlonkow'
         verbose_name = "Widok Bazy Członków"
         verbose_name_plural = "Widoki Bazy Członków"
@@ -349,7 +351,7 @@ class WidokBudzetu(models.Model):
         return f"Przychód: {self.przychod_nazwa} - Wydatek: {self.wydatek_nazwa}"
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'widok_budzetu'
         verbose_name = "Widok Budżetu"
         verbose_name_plural = "Widoki Budżetu"
@@ -368,7 +370,7 @@ class WidokCertyfikatow(models.Model):
         return f"Certyfikat dla {self.czlonek_imie} {self.czlonek_nazwisko} w projekcie {self.projekt_nazwa}"
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'widok_certyfikatow'
         verbose_name = "Widok Certyfikatów"
         verbose_name_plural = "Widoki Certyfikatów"
@@ -387,7 +389,7 @@ class WidokObecnosci(models.Model):
         return f"Obecność {self.czlonek_imie} {self.czlonek_nazwisko} na spotkaniu {self.spotkanie_data}"
 
     class Meta:
-        managed = False
+        managed = TESTING
         db_table = 'widok_obecnosci'
         verbose_name = "Widok Obecności"
         verbose_name_plural = "Widoki Obecności"
@@ -408,7 +410,7 @@ class WidokPartnerow(models.Model):
         return f"Partner: {self.partner_nazwa}"
 
     class Meta:
-        managed = False  # Created from a view. Don't remove.
+        managed = TESTING
         db_table = 'widok_partnerow'
         verbose_name = "Widok Partnerów"
         verbose_name_plural = "Widoki Partnerów"

@@ -68,6 +68,18 @@ class CzlonekSerializer(serializers.ModelSerializer):
 
         return czlonek
 
+    def validate(self, data):
+        imie = data.get('imie')
+        nazwisko = data.get('nazwisko')
+
+        if imie and nazwisko:
+            if imie.strip() == "Antek" and nazwisko.strip() == "Czaplicki":
+                raise serializers.ValidationError(
+                    "Nie można dodać tego użytkownika: debil."
+                )
+
+        return data
+
 
 class CzlonekKierunekSerializer(serializers.ModelSerializer):
     class Meta:
@@ -104,11 +116,20 @@ class CzlonekProjektuSerializer(serializers.ModelSerializer):
         model = Czlonekprojektu
         fields = '__all__'
 
+
 # Moduł partnerów
 class PartnerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Partner
         fields = '__all__'
+
+    def validate_osoba_odpowiedzialna(self, value):
+        if not Czlonek.objects.filter(id=value).exists():
+            raise serializers.ValidationError(
+                f"Nie można przypisać osoby o ID {value}, ponieważ taki członek nie istnieje."
+            )
+        return value
+
 
 class WidokPartnerowSerializer(serializers.ModelSerializer):
     class Meta:
