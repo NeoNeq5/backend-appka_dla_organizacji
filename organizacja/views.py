@@ -9,7 +9,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from .models import Czlonek, WidokBazyCzlonkow, Czlonekkierunek, Czloneksekcji, Sekcja, Kierunek, Projekt, \
     Czlonekprojektu, WidokPartnerow, Partner, OdpowiedziSlownik, Przychod, Budzet, Wydatek, Spotkanie, Spotkanieczlonek, \
-    WidokObecnosci, Uzytkownikorganizacja
+    WidokObecnosci, Uzytkownikorganizacja, Certyfikat
 from .serializers import CzlonekSerializer, WidokBazyCzlonkowSerializer, CzlonekKierunekSerializer, \
     CzlonekSekcjiSerializer, SekcjaSerializer, KierunekSerializer, ProjektSerializer, CzlonekProjektuSerializer, \
     WidokPartnerowSerializer, PartnerSerializer, OdpowiedziSlownikSerializer, PrzychodSerializer, WydatekSerializer, \
@@ -25,6 +25,13 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from django.contrib.auth.hashers import check_password
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import api_view
+import io
+import os
+from django.http import FileResponse
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 # Słowniki
 class OdpowiedziSlownikViewSet(viewsets.ReadOnlyModelViewSet):
@@ -344,15 +351,43 @@ class CertyfikatGeneratorViewSet(viewsets.ViewSet):
 
         czlonkowie = self._get_members(typ_grupy, grupa_id)
 
-        try:
+        buffer = io.BytesIO()
+
+        # dokument zawsze na A4 w poziomie
+        p = canvas.Canvas(buffer, pagesize=landscape(A4))
+        width, height = landscape(A4)
+
+        for czlonek in czlonkowie:
+            p.drawImage(full_path, 0, 0, width=width, height=height)
+
+            font_size = 40
+            p.setFont("Helvetica-Bold", font_size)
+            p.setFillColorRGB(0, 0, 0)
+
+            tekst = f"{czlonek.imie} {czlonek.nazwisko}"
+            text_width = p.stringWidth(tekst, "Helvetica-Bold", font_size)
+
+            x_centered = (width - text_width) / 2
+            y_centered = height / 2
+
+            p.drawString(x_centered, y_centered, tekst)
+
+            Certyfikat.objects.create(
+                id_czlonka=czlonek,
+                id_projekt=Projekt.objects.get(id=grupa_id) if typ_grupy == 'projekt' else None,
+                id_sekcja=Sekcja.objects.get(id=grupa_id) if typ_grupy == 'sekcja' else None,
+                opis=f"Wygenerowano automatycznie: {typ_grupy} ID {grupa_id}"
+            )
+
+            p.showPage()
+
+        p.save()
+        buffer.seek(0)
+
+        if os.path.exists(full_path):
             os.remove(full_path)
-            return Response({
-                "message": f"Wygenerowano certyfikaty dla {len(czlonkowie)} osób. Tło usunięte.",
-                "lista_osob": [f"{c.imie} {c.nazwisko}" for c in czlonkowie]
-            })
-        except Exception as e:
-            if os.path.exists(full_path): os.remove(full_path)
-            return Response({"error": str(e)}, status=500)
+
+        return FileResponse(buffer, as_attachment=True, filename="certyfikaty_zbiorcze.pdf")
 
     def _get_members(self, typ, g_id):
         """Pomocnicza funkcja do filtrowania członków wg Twoich grup"""

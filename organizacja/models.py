@@ -28,8 +28,8 @@ class Budzet(models.Model):
 
 class Certyfikat(models.Model):
     id_czlonka = models.ForeignKey('Czlonek', models.DO_NOTHING, db_column='id_czlonka')
-    id_projekt = models.ForeignKey('Projekt', models.DO_NOTHING, db_column='id_projekt')
-    id_sekcja = models.ForeignKey('Sekcja', models.DO_NOTHING, db_column='id_sekcja')
+    id_projekt = models.ForeignKey('Projekt', models.DO_NOTHING, db_column='id_projekt', null=True, blank=True)
+    id_sekcja = models.ForeignKey('Sekcja', models.DO_NOTHING, db_column='id_sekcja', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     opis = models.CharField(max_length=255, blank=True, null=True)
 
